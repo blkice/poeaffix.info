@@ -1,0 +1,9 @@
+title: PoE Item Affixes
+description: >
+    Path of Exile Item Affixes
+
+github_username: pblackice
+
+exclude:
+    - Gemfile
+    - Gemfile.lock
