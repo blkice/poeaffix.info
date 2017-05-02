@@ -1,9 +1,28 @@
 title: PoE Item Affixes
+author: pblackice
+
 description: >
     Path of Exile Item Affixes
 
 github_username: pblackice
 
+collections:
+    mods:
+        output: true
+
+defaults:
+  - scope:
+      path: ""
+      type: mods
+    values:
+      layout: mods-page
+
+sass:
+    style: compressed
+
+theme: minima
+
 exclude:
-    - Gemfile
-    - Gemfile.lock
+  - Gemfile
+  - Gemfile.lock
+  - tools
