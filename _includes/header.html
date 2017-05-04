@@ -1,12 +1,27 @@
 <header class="site-header" role="banner">
+
   <div class="wrapper">
-    {% assign default_paths = site.pages | map: "path" %}
-    {% assign page_paths = site.header_pages | default: default_paths %}
     <a class="site-title" href="{{ "/" | replative_url }}">{{ site.title | escape }}</a>
 
-    {% if page_paths %}
-      <nav class="site-nav">
-      </nav>
-    {% endif %}
+    <nav class="site-nav">
+      <ul>
+        {% assign mod_page_groups = site.mods | group_by: "category" %}
+        {% for mod_page_group in mod_page_groups %}
+        {% assign category = mod_page_group.items | map: "category" | first %}
+        {% if category %}
+        <li>
+          {{ category }}
+          <ul>
+            {% for mod_page in mod_page_group.items %}
+            <li>
+              <a class="mod-page-link" href="{{ mod_page.url | relative_url}}">{{ mod_page.title }}</a>
+            </li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
   </div>
 </header>

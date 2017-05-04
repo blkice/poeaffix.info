@@ -1,5 +1,6 @@
-title: PoE Item Affixes
-author: pblackice
+title: Path of Exile Item Affixes
+author: pblkice
+email: private.blackice@gmail.com
 
 description: >
     Path of Exile Item Affixes
@@ -9,6 +10,7 @@ github_username: pblackice
 collections:
     mods:
         output: true
+        permalink: /:name
 
 defaults:
   - scope:
@@ -16,6 +18,14 @@ defaults:
       type: mods
     values:
       layout: mods-page
+  - scope:
+      path: _mods/weapon
+    values:
+      category: Weapon
+  - scope:
+      path: _mods/jewel
+    values:
+      category: Jewel
 
 sass:
     style: compressed

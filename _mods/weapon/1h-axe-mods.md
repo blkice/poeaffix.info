@@ -1,5 +1,5 @@
 ---
-category: One-handed Axe Modifiers
+title: One-handed Axe Modifiers
 corruption:
 - id: FireDamageLifeLeech
   mods:

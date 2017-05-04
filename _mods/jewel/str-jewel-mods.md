@@ -1,5 +1,5 @@
 ---
-category: Crimson Jewel Modifiers
+title: Crimson Jewel Modifiers
 corruption:
 - id: ChaosResistance
   mods:
