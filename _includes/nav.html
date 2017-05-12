@@ -1,0 +1,24 @@
+<nav class="site-nav">
+  <ul>
+    {% assign mod_page_groups = site.mods | group_by: "category" %}
+    {% for mod_page_group in mod_page_groups %}
+    {% assign category = mod_page_group.items | map: "category" | first %}
+    {% if category %}
+    <li class="dropdown-menu">
+      <a class="dropdown-toggle" href="javascript:void(0)">
+      {{ category | escape }}
+      </a>
+      <ul class="dropdown-content">
+        {% for mod_page in mod_page_group.items %}
+        <li>
+          <a class="mod-page-link" href="{{ mod_page.url | relative_url }}">
+            {{ mod_page.title | escape }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endif %}
+    {% endfor %}
+  </ul>
+</nav>

@@ -1,0 +1,9 @@
+@mixin media-query($device-width) {
+  @media screen and (max-width: $device-width) {
+    @content;
+  }
+}
+
+@mixin relative-font-size($ratio) {
+  font-size: $base-font-size * $ratio;
+}

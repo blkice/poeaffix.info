@@ -1,0 +1,28 @@
+.mod-group-list {
+  list-style-type: none;
+  padding-left: $spacing-unit;
+
+  .mod-group-effect {
+    margin: 0;
+    padding-left: $spacing-unit / 3;
+    padding-right: $spacing-unit / 3;
+
+    &.active:after {
+      float: right;
+      content: "-";
+    }
+
+    &:not(.active):after {
+      float: right;
+      content: "+";
+    }
+
+    &:hover {
+      background-color: $grey-color-light;
+    }
+  }
+
+  & > li {
+    border-bottom: 1px solid $grey-color-dark;
+  }
+}

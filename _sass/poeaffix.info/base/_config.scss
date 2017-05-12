@@ -1,0 +1,28 @@
+// Font weights
+$font-weight-light: 100;
+$font-weight-regular: 400;
+$font-weight-bold: 600;
+
+// Base font
+$base-font-family: sans-serif !default;
+$base-font-size: 16px !default;
+$base-font-weight: $font-weight-regular !default;
+$base-line-height: 1.5 !default;
+
+$small-font-size: $base-font-size * 0.875 !default;
+
+// Headings
+$heading-font-weight: $font-weight-bold;
+
+// Colors
+$text-color: #111 !default;
+$background-color: #fdfdfd !default;
+$brand-color: #2a7ae2 !default;
+
+$grey-color: #828282 !default;
+$grey-color-light: lighten($grey-color, 40%) !default;
+$grey-color-dark: darken($grey-color, 25%) !default;
+
+// Dimensions
+$content-width: 800px !default;
+$spacing-unit: 24px !default;

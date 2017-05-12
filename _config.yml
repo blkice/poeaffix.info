@@ -1,38 +1,46 @@
+# -----------------------------------------------------------------------------
+# Site settings
+# -----------------------------------------------------------------------------
 title: Path of Exile Item Affixes
-author: pblkice
-email: private.blackice@gmail.com
-
 description: >
-    Path of Exile Item Affixes
-
-github_username: pblackice
+    Description...
+repository: blkice/poeaffix.info
 
 collections:
     mods:
         output: true
-        permalink: /:name
+        permalink: /:collection/:name
 
 defaults:
-  - scope:
-      path: ""
-      type: mods
-    values:
-      layout: mods-page
-  - scope:
-      path: _mods/weapon
-    values:
-      category: Weapon
-  - scope:
-      path: _mods/jewel
-    values:
-      category: Jewel
+    - scope:
+        type: mods
+      values:
+        layout: mod-page
+    - scope:
+        path: _mods/weapon
+      values:
+        category: Weapon
+    - scope:
+        path: _mods/armour
+      values:
+        category: Body Armour
+    - scope:
+        path: _mods/helmet
+      values:
+        category: Helmet
 
+# -----------------------------------------------------------------------------
+# Build settings
+# -----------------------------------------------------------------------------
+markdown: kramdown
+
+# -----------------------------------------------------------------------------
+# Sass settings
+# -----------------------------------------------------------------------------
 sass:
-    style: compressed
-
-theme: minima
+    style: expanded
 
 exclude:
-  - Gemfile
-  - Gemfile.lock
-  - tools
+    - Gemfile
+    - Gemfile.lock
+    - tools

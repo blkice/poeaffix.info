@@ -1,0 +1,42 @@
+---
+layout: default
+
+affix_mod_groups:
+  prefix_mod_groups: Prefixes
+  suffix_mod_groups: Suffixes
+---
+
+<h1 class="page-title item-type">{{ page.title }}</h1>
+
+{% for affix_mod_group_hash in layout.affix_mod_groups %}
+{% assign affix_mod_group = affix_mod_group_hash[0] %}
+{% assign affix_mod_group_name = affix_mod_group_hash[1] %}
+<div class="{{ affix_mod_group | slugify }}">
+  <h2 class="section-title affix-type">{{ affix_mod_group_name }}</h2>
+  <ul class="mod-group-list">
+    {% for mod_group in page[affix_mod_group] %}
+    <li>
+      <h3 class="subsection-title mod-group-effect">{{ mod_group.effect_text }}</h3>
+      <table class="mod-group">
+        <tr>
+          <th>Tier</th>
+          <th>Name</th>
+          <th>Item Level</th>
+          <th>Effect</th>
+          <th>Spawn Chance</th>
+        </tr>
+        {% for mod in mod_group.mods %}
+        <tr>
+          <td class="mod-tier">{{ forloop.index }}</td>
+          <td class="mod-name">{{ mod.name }}</td>
+          <td class="mod-level-req">{{ mod.required_level }}</td>
+          <td class="mod-effect">{{ mod.effect_text }}</td>
+          <td class="mod-spawn-chance">{{ mod.spawn_chance }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endfor %}
