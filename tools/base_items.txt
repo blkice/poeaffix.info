@@ -1,0 +1,68 @@
+Rusted Hatchet          # One Hand Axe
+Nailed Fist             # Claw
+Glass Shank             # Dagger
+Driftwood Club          # One Hand Mace
+Driftwood Sceptre       # Sceptre
+Rusted Sword            # One Hand Sword
+Driftwood Wand          # Wand
+
+Stone Axe               # Two Hand Axe
+Crude Bow               # Bow
+Fishing Rod             # Fishing Rod
+Driftwood Maul          # Two Hand Mace
+Gnarled Branch          # Staff
+Corroded Blade          # Two Hand Sword
+
+Plate Vest              # AR Body Armour
+Shabby Jerkin           # EV Body Armour
+Simple Robe             # ES Body Armour
+Scale Vest              # AR/EV Body Armour
+Chainmail Vest          # AR/ES Body Armour
+Padded Vest             # EV/ES Body Armour
+Sacrificial Garb        # AR/EV/ES Body Armour
+
+Iron Greaves            # AR Boots
+Rawhide Boots           # EV Boots
+Wool Shoes              # ES Boots
+Leatherscale Boots      # AR/EV Boots
+Chain Boots             # AR/ES Boots
+Wrapped Boots           # EV/ES Boots
+
+Iron Gauntlets          # AR Gloves
+Rawhide Gloves          # EV Gloves
+Wool Gloves             # ES Gloves
+Fishscale Guantlets     # AR/EV Gloves
+Chain Gloves            # AR/ES Gloves
+Wrapped Mitts           # EV/ES Gloves
+
+Iron Hat                # AR Helmet
+Leather Cap             # EV Helmet
+Vine Circlet            # ES Helmet
+Battered Helmet         # AR/EV Helmet
+Rusted Coif             # AR/ES Helmet
+Scare Mask              # EV/ES Helmet
+
+Splintered Tower Shield # AR Shield
+Goathide Buckler        # EV Shield
+Twig Spirit Shield      # ES Shield
+Rotted Round Shielld    # AR/EV Shield
+Plank Kite Shield       # AR/ES Shield
+Spiked Bundle           # EV/ES Shield
+
+Amber Amulet
+Leather Belt
+Blunt Arrow Quiver
+Coral Ring
+Unset Ring
+
+Small Life Flask
+Small Mana Flask
+Small Hybrid Flask
+Basalt Flask            # Utility Flask
+Diamond Flask           # Critical Utility Flask
+Silver Flask            # Silver Flask
+
+Cobalt Jewel
+Crimson Jewel
+Viridian Jewel
+Prismatic Jewel

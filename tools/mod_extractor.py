@@ -1,179 +1,241 @@
 #!/usr/bin/env python
 
 # Python
-from argparse import ArgumentParser
-from itertools import groupby
-from operator import itemgetter
-from yaml import dump
+import argparse
+import logging
+import sys
+import textwrap
+import yaml
 
 # PyPoE
 from PyPoE.poe.constants import MOD_DOMAIN, MOD_GENERATION_TYPE
-from PyPoE.poe.file.dat import RelationalReader
+from PyPoE.poe.file.dat import DatRecord, RelationalReader
+from PyPoE.poe.file.ot import OTFileCache
 from PyPoE.poe.file.translations import TranslationFileCache
 from PyPoE.poe.sim.mods import get_translation, generate_spawnable_mod_list, SpawnChanceCalculator
 
+class Mod():
+    '''
+    Proxy class for a DatRecord from the Mods.dat file.
+    '''
+    def __init__(self, mod_dat_record):
+        self._dat_record = mod_dat_record
 
-ITEM_TYPES = {
-    'one_handed_axe': {
-        'tags': ['default', 'weapon', 'onehand', 'axe', 'one_hand_weapon']
-    },
-    'claw': {
-        'tags': ['default', 'weapon', 'onehand', 'claw', 'one_hand_weapon']
-    },
-    'dagger': {
-        'tags': ['default', 'weapon', 'onehand', 'dagger', 'one_hand_weapon']
-    },
-    'mace': {
-        'tags': ['default', 'weapon', 'onehand', 'mace', 'one_hand_weapon']
-    },
-    'sceptre': {
-        'tags': ['default', 'weapon', 'onehand', 'sceptre', 'one_hand_weapon']
-    },
-    'one_handed_sword': {
-        'tags': ['default', 'weapon', 'onehand', 'sword', 'one_hand_weapon']
-    },
-    'one_handed_thrusting_sword': {
-        'tags': ['default', 'weapon', 'onehand', 'sword', 'one_hand_weapon', 'rapier']
-    },
-    'wand': {
-        'tags': ['default', 'weapon', 'onehand', 'wand', 'ranged', 'one_hand_weapon']
-    },
-    'two_handed_axe': {
-        'tags': ['default', 'weapon', 'twohand', 'axe', 'two_hand_weapon']
-    },
-    'bow': {
-        'tags': ['default', 'weapon', 'twohand', 'bow', 'ranged', 'two_hand_weapon']
-    },
-    'two_handed_mace': {
-        'tags': ['default', 'weapon', 'twohand', 'mace', 'two_hand_weapon']
-    },
-    'staff': {
-        'tags': ['default', 'weapon', 'twohand', 'staff', 'two_hand_weapon']
-    },
-    'two_handed_sword': {
-        'tags': ['default', 'weapon', 'twohand', 'sword', 'two_hand_weapon']
-    },
-    'fishing_rod': {
-        'tags': ['default', 'weapon', 'twohand', 'fishing_rod']
-    },
-    'str_body_armour': {
-        'tags': ['default', 'armour', 'body_armour', 'str_armour']
-    },
-    'dex_body_armour': {
-        'tags': ['default', 'armour', 'body_armour', 'dex_armour']
-    },
-    'int_body_armour': {
-        'tags': ['default', 'armour', 'body_armour', 'int_armour']
-    },
-    'str_dex_body_armour': {
-        'tags': ['default', 'armour', 'body_armour', 'str_dex_armour']
-    },
-    'str_int_body_armour': {
-        'tags': ['default', 'armour', 'body_armour', 'str_int_armour']
-    },
-    'dex_int_body_armour': {
-        'tags': ['default', 'armour', 'body_armour', 'dex_int_armour']
-    },
-    'str_helmet': {
-        'tags': ['default', 'armour', 'helmet', 'str_armour']
-    },
-    'amulet': {
-        'tags': ['default', 'amulet']
-    },
-    'str_jewel': {
-        'tags': ['default', 'jewel', 'not_dex', 'not_int', 'strjewel']
-    },
-    'dex_jewel': {
-        'tags': ['default', 'jewel', 'not_str', 'not_int', 'dexjewel']
-    },
-    'int_jewel': {
-        'tags': ['default', 'jewel', 'not_dex', 'not_str', 'intjewel']
-    },
-}
 
-MOD_GENERATION_TYPES = [
-    MOD_GENERATION_TYPE.PREFIX,
-    MOD_GENERATION_TYPE.SUFFIX,
-    MOD_GENERATION_TYPE.CORRUPTED,
-    MOD_GENERATION_TYPE.ENCHANTMENT
-]
+class ModExtractor:
+    SPAWNABLE_MOD_GENERATION_TYPES = [
+        MOD_GENERATION_TYPE.PREFIX,
+        MOD_GENERATION_TYPE.SUFFIX,
+        MOD_GENERATION_TYPE.CORRUPTED,
+        MOD_GENERATION_TYPE.ENCHANTMENT
+    ]
 
-class ModReader:
+    ESSENCE_MODS_KEYS = {
+        'Wand': 'Wand_ModsKey',
+        'Dagger': '1Hand_ModsKey2',
+        'Claw': '1Hand_ModsKey3',
+        'One Hand Axe': '1Hand_ModsKey4',
+        'One Hand Sword': '1Hand_ModsKey5',
+        'Thrusting One Hand Sword': '1Hand_ModsKey6',
+        'One Hand Mace': '1Hand_ModsKey7',
+        'Sceptre': '1Hand_ModsKey8',
+        'Bow': 'Bow_ModsKey',
+        'Two Hand Axe': '2Hand_ModsKey2',
+        'Two Hand Sword': '2Hand_ModsKey3',
+        'Two Hand Mace': '2Hand_ModsKey4',
+        'Fishing Rod': '2Hand_ModsKey5',
+        'Ring': 'Ring_ModsKey',
+        'Amulet': 'Amulet2_ModsKey',
+        'Belt': 'Belt2_ModsKey',
+        'Shield': 'Shield2_ModsKey',
+        'Helmet': 'Helmet2_ModsKey',
+        'Body Armour': 'BodyArmour2_ModsKey',
+        'Boots': 'Boots2_ModsKey',
+        'Gloves': 'Gloves2_ModsKey',
+        'Quiver': 'Quiver_ModsKey'
+    }
+
     def __init__(self, ggpk_path):
-        reader_opts = {'use_dat_value': False,'auto_build_index': True}
+        reader_opts = {
+            'use_dat_value': False,
+            'auto_build_index': True
+        }
 
-        self.reader = RelationalReader(path_or_ggpk=ggpk_path,
-                                       raise_error_on_missing_relation=False,
-                                       read_options=reader_opts)
+        self.dat_reader = RelationalReader(path_or_ggpk=ggpk_path,
+                                           read_options=reader_opts)
+        self.ot_files = OTFileCache(path_or_ggpk=ggpk_path)
+        self.translations = TranslationFileCache(path_or_ggpk=ggpk_path,
+                                                 merge_with_custom_file=True)
 
-        self.translations = TranslationFileCache(path_or_ggpk=ggpk_path)
+    def get_item_mods(self, base_item_name):
+        base_item_type = next((
+            t for t in self.dat_reader['BaseItemTypes.dat']
+            if t['Name'] == base_item_name
+        ), None)
 
-    def get_mods(self, item_type):
-        tags = self._get_item_tags(item_type)
-        domain = self._get_mod_domain(item_type)
+        if base_item_type is None:
+            raise ValueError(f'could not find base item \'{base_item_name}\'')
 
-        result = {}
+        mods = []
 
-        for gentype in MOD_GENERATION_TYPES:
-            mod_groups = self._get_mod_groups(domain, gentype, tags)
-            result[gentype.name.lower() + '_mod_groups'] = mod_groups
+        mods.extend(self._get_craftable_mods(base_item_type))
+        mods.extend(self._get_essence_mods(base_item_type))
+        mods.extend(self._get_spawnable_mods(base_item_type))
 
-        return result
+        return mods
 
-    def _get_mod_groups(self, mod_domain, mod_generation_type, tags):
-        mods = generate_spawnable_mod_list(self.reader['Mods.dat'], mod_domain,
-                                           mod_generation_type, level=100,
-                                           tags=tags)
+    def get_mod_stats(self):
+        print('=Base Item Types')
 
-        mods.sort(key=itemgetter('CorrectGroup'))
+        for base_item_type in self.dat_reader['BaseItemTypes.dat']:
+            item_name = base_item_type['Name']
+            item_class = base_item_type['ItemClassesKey']['Id']
+            item_category = base_item_type['ItemClassesKey']['Category']
+            print(f'{item_name} | {item_class} | {item_category}', )
 
-        scc = SpawnChanceCalculator(mods, tags)
-        mod_groups = []
+        print('=Essence Modifiers')
 
-        for mod_group_id, mod_group in groupby(mods, key=itemgetter('CorrectGroup')):
-            current_mod_group = {'id': mod_group_id}
-            mod_groups.append(current_mod_group)
-            for mod in mod_group:
-                current_mod_group.setdefault('mods', []).append({
-                    'id': mod['Id'],
-                    'name': mod['Name'],
-                    'effect_text': self._get_translation(mod),
-                    'required_level': mod['Level'],
-                    'spawn_weight': scc.get_spawn_weight(mod),
-                    'spawn_chance': f'{scc.spawn_chance(mod, remove=False):.2%}'
-                })
-                current_mod_group.setdefault('effect_text', self._get_translation(mod, use_placeholder=lambda _: '#'))
+        for essence in self.dat_reader['Essences.dat']:
+            print(f'{essence["BaseItemTypesKey"]["Name"]:}')
+            for _, mods_key in self.ESSENCE_MODS_KEYS:
+                mod = essence[mods_key]
+                if mod is not None:
+                    print(f'- {mods_key}: {mod["Id"]}')
+                else:
+                    print(f'- {mods_key}: {mod}')
 
-        return mod_groups
+    def get_strongbox_mods(self):
+        strongbox_mods = []
+        for strongbox in self.dat_reader['Strongboxes.dat']:
+            chest = strongbox['ChestsKey']
+            print(f'{chest["Name"]}:')
+            print(f'- modifiers:')
+            for mod in chest['ModsKeys']:
+                print(f'  - {mod["Id"]}')
+        return strongbox_mods
+
+    def _get_craftable_mods(self, base_item_type):
+        craftable_mods = []
+
+        for opt in self.dat_reader['CraftingBenchOptions.dat']:
+            if base_item_type['ItemClassesKey'] in opt['ItemClassesKeys']:
+                mod_dat_record = opt['ModsKey']
+                if mod_dat_record is not None:
+                    mod = self._create_mod(mod_dat_record)
+                    mod['master_name'] = opt['NPCMasterKey']['NPCsKey']['ShortName']
+                    mod['master_level'] = opt['MasterLevel']
+                    craftable_mods.append(mod)
+
+        return craftable_mods
+
+    def _get_essence_mods(self, base_item_type):
+        item_class = base_item_type['ItemClassesKey']['Id']
+        mods_key = self.ESSENCE_MODS_KEYS[item_class]
+
+        essence_mods = []
+
+        for ess in self.dat_reader['Essences.dat']:
+            mod_dat_record = ess[mods_key]
+            if mod_dat_record is not None and mod_dat_record['IsEssenceOnlyModifier']:
+                mod = self._create_mod(mod_dat_record)
+                mod['essence'] = ess['BaseItemTypesKey']['Name']
+                essence_mods.append(mod)
+
+        return essence_mods
+
+    def _get_spawnable_mods(self, base_item_type):
+        domain = self._get_mod_domain(base_item_type)
+        tags = self._get_item_tags(base_item_type)
+
+        spawnable_mods = []
+
+        for gentype in self.SPAWNABLE_MOD_GENERATION_TYPES:
+            mods = generate_spawnable_mod_list(self.dat_reader['Mods.dat'],
+                                               domain, gentype, level=100,
+                                               tags=tags)
+            scc = SpawnChanceCalculator(mods, tags)
+
+            for mod_dat_record in mods:
+                mod = self._create_mod(mod_dat_record)
+                mod['spawn_chance'] = '{:0.2%}'.format(scc.spawn_chance(mod_dat_record, remove=False))
+                spawnable_mods.append(mod)
+
+        return spawnable_mods
+
+    def _create_mod(self, mod_dat_record):
+        return {
+            'id': mod_dat_record['Id'],
+            'name': mod_dat_record['Name'],
+            'group': mod_dat_record['CorrectGroup'],
+            'domain': mod_dat_record['Domain'].name.lower(),
+            'generation_type': mod_dat_record['GenerationType'].name.lower(),
+            'effect_text': self._get_translation(mod_dat_record),
+            'effect_text_generic': self._get_translation(mod_dat_record, use_placeholder=lambda _: '#'),
+            'effect_values': self._get_translation(mod_dat_record, only_values=True),
+            'is_essence_only': mod_dat_record['IsEssenceOnlyModifier']
+        }
 
     def _get_translation(self, mod, **kwargs):
-        return ', '.join(get_translation(mod, self.translations, **kwargs).lines)
+        translation_result = get_translation(mod, self.translations, **kwargs)
 
-    def _get_item_tags(self, item_type):
-        return ITEM_TYPES[item_type]['tags']
+        if kwargs.get('only_values') is not None:
+            values = [
+                [[slot[0], slot[1]] if isinstance(slot, tuple) else [slot] for slot in line]
+            for line in translation_result.values_parsed]
+            return values
+        else:
+            return translation_result.lines
 
-    def _get_mod_domain(self, item_type):
-        if 'flask' in item_type:
+    def _get_item_tags(self, base_item_type):
+        tags = base_item_type['TagsKeys']
+
+        metadata_file = base_item_type['InheritsFrom'] + '.ot'
+        parent_tags = self.ot_files[metadata_file]['Base']['tag'].keys()
+        tags.extend(parent_tags)
+
+        return tags
+
+    def _get_mod_domain(self, base_item_type):
+        default_domain = MOD_DOMAIN.ITEM
+        item_class = base_item_type['ItemClassesKey']['Id']
+        item_category = base_item_type['ItemClassesKey']['Category']
+
+        if item_category == 'Flasks' or item_class == 'UtilityFlaskCritical':
             return MOD_DOMAIN.FLASK
-        if 'leaguestone' in item_type:
-            return MOD_DOMAIN.LEAGUESTONE
-        if 'jewel' in item_type:
+        if item_class == 'Jewel':
             return MOD_DOMAIN.JEWEL
-        return MOD_DOMAIN.ITEM
+        if item_class == 'Leaguestone':
+            return MOD_DOMAIN.LEAGUESTONE
+
+        return default_domain
 
 
 def main():
-    parser = ArgumentParser(description='Item modifiers -> YAML data')
-    parser.add_argument('ggpk_path', metavar='GGPK_CONTENT_PATH',
-            help='The path to the unpacked Content.ggpk')
-    parser.add_argument('item_type', metavar='ITEM_TYPE',
-            help='A type of weapon/armour/etc.')
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=textwrap.dedent('''\
+            Extract item modifiers from Path of Exile game data.
+            Extracted data will be written to stdout in the YAML format.
+            Example: ./%(prog)s PyPoE_Temp/ > mods.yaml
+            '''))
+
+    parser.add_argument('ggpk_path',
+                        metavar='GGPK_CONTENT_PATH',
+                        help='Path to a Content.ggpk file unpacked by PyPoE')
+    parser.add_argument('--base_item',
+                        metavar='BASE_ITEM_NAME',
+                        help='Extract only modifiers for the given base item')
 
     args = parser.parse_args()
+    mod_extractor = ModExtractor(args.ggpk_path)
 
-    out = ModReader(args.ggpk_path).get_mods(args.item_type)
+    if args.base_item:
+        item_mods = mod_extractor.get_item_mods(args.base_item)
+        print(yaml.dump(item_mods, explicit_start=True))
 
-    print(dump(out, default_flow_style=False, indent=2))
+    mod_extractor.get_strongbox_mods()
 
 
 if __name__ == '__main__':

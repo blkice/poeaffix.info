@@ -12,18 +12,18 @@ affix_mod_groups:
 {% assign affix_mod_group = affix_mod_group_hash[0] %}
 {% assign affix_mod_group_name = affix_mod_group_hash[1] %}
 <div class="{{ affix_mod_group | slugify }}">
-  <h2 class="section-title affix-type">{{ affix_mod_group_name }}</h2>
+  <h2 class="section-title mod-generation-type">{{ affix_mod_group_name }}</h2>
   <ul class="mod-group-list">
     {% for mod_group in page[affix_mod_group] %}
     <li>
       <h3 class="subsection-title mod-group-effect">{{ mod_group.effect_text }}</h3>
-      <table class="mod-group">
+      <table class="mod-list mod-group">
         <tr>
           <th>Tier</th>
           <th>Name</th>
-          <th>Item Level</th>
+          <th>Level</th>
           <th>Effect</th>
-          <th>Spawn Chance</th>
+          <th>Chance</th>
         </tr>
         {% for mod in mod_group.mods %}
         <tr>
@@ -40,3 +40,24 @@ affix_mod_groups:
   </ul>
 </div>
 {% endfor %}
+
+<div class="corruptions">
+  <h2 class="section-title mod-generation-type">Corruptions</h2>
+  <table class="mod-list">
+    <tr>
+      <th>Tier</th>
+      <th>Level</th>
+      <th>Effect</th>
+      <th>Chance</th>
+    </tr>
+    {% for mod_group in page.corrupted_mod_groups %}
+    {% for mod in mod_group.mods %}
+    <tr>
+      <td class="mod-level-req">{{ mod.required_level }}</td>
+      <td class="mod-effect">{{ mod.effect_text }}</td>
+      <td class="mod-spawn-chance">{{ mod.spawn_chance }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </table>
+</div>
